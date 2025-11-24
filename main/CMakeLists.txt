@@ -553,6 +553,10 @@ elseif(CONFIG_BOARD_TYPE_AIPI_LITE)
     set(BUILTIN_TEXT_FONT font_puhui_basic_14_1)
     set(BUILTIN_ICON_FONT font_awesome_14_1)
     set(DEFAULT_EMOJI_COLLECTION twemoji_32)
+elseif(BOARD_TYPE_MANBO_ROBOT)
+    set(BOARD_TYPE "manbo-robot")
+    set(BUILTIN_TEXT_FONT font_puhui_basic_14_1)
+    set(BUILTIN_ICON_FONT font_awesome_14_1)
 endif()
 
 file(GLOB BOARD_SOURCES
