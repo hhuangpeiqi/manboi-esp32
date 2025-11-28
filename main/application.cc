@@ -361,7 +361,10 @@ void Application::Start() {
     /* Setup the audio service */
     auto codec = board.GetAudioCodec();
     audio_service_.Initialize(codec);
+
     audio_service_.Start();
+
+    
 
     AudioServiceCallbacks callbacks;
     callbacks.on_send_queue_available = [this]() {
@@ -372,6 +375,9 @@ void Application::Start() {
     };
     callbacks.on_vad_change = [this](bool speaking) {
         xEventGroupSetBits(event_group_, MAIN_EVENT_VAD_CHANGE);
+    };
+    callbacks.on_cmd_word_detected = [this](const std::string& cmd_word, int8_t id) {
+        ESP_LOGE(TAG, "Command detected: %s id: %d", cmd_word.c_str(), id);
     };
     audio_service_.SetCallbacks(callbacks);
 
@@ -614,6 +620,7 @@ void Application::MainEventLoop() {
         }
     }
 }
+
 
 void Application::OnWakeWordDetected() {
     if (!protocol_) {

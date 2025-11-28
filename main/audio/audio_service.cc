@@ -1,4 +1,5 @@
 #include "audio_service.h"
+#include <cstdint>
 #include <esp_log.h>
 #include <cstring>
 
@@ -8,12 +9,7 @@
 #include "processors/no_audio_processor.h"
 #endif
 
-#if CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
-#include "wake_words/afe_wake_word.h"
-#include "wake_words/custom_wake_word.h"
-#else
-#include "wake_words/esp_wake_word.h"
-#endif
+
 
 #define TAG "AudioService"
 
@@ -655,6 +651,13 @@ void AudioService::SetModelsList(srmodel_list_t* models_list) {
 #if CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
     if (esp_srmodel_filter(models_list_, ESP_MN_PREFIX, NULL) != nullptr) {
         wake_word_ = std::make_unique<CustomWakeWord>();
+
+        std::deque<Command_by_id> custom_commands;
+        custom_commands.push_back({1, "xiao tu dou", "td", "wake"});
+        custom_commands.push_back({2, "wu sa qi", "537", "cmd"});
+        custom_commands.push_back({2, "wu sha qi", "537", "cmd"});
+        custom_commands.push_back({3, "man bo", "mb", "cmd"});
+        ResetMultinet(custom_commands);
     } else if (esp_srmodel_filter(models_list_, ESP_WN_PREFIX, NULL) != nullptr) {
         wake_word_ = std::make_unique<AfeWakeWord>();
     } else {
@@ -675,6 +678,15 @@ void AudioService::SetModelsList(srmodel_list_t* models_list) {
             }
         });
     }
+
+    if (auto* custom = dynamic_cast<CustomWakeWord*>(wake_word_.get())) {
+        custom->OnCmdWordDetected([this](const std::string& cmd_word, int8_t id) {
+            if (callbacks_.on_cmd_word_detected) {
+                callbacks_.on_cmd_word_detected(cmd_word, id);
+            }
+        });
+    }
+
 }
 
 bool AudioService::IsAfeWakeWord() {
@@ -683,4 +695,15 @@ bool AudioService::IsAfeWakeWord() {
 #else
     return false;
 #endif
+}
+
+bool AudioService::ResetMultinet(std::deque<Command_by_id> custom_commands)  {
+#ifdef CONFIG_IDF_TARGET_ESP32S3
+    auto* custom = dynamic_cast<CustomWakeWord*>(wake_word_.get());
+    if (custom) {
+        ESP_LOGE("AudioService", "ResetMultinet");
+        return custom->ResetMultinet(custom_commands);
+    }
+#endif
+    return false;
 }

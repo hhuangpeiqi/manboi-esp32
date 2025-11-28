@@ -83,19 +83,61 @@ void CustomWakeWord::ParseWakenetModelConfig() {
     cJSON_Delete(root);
 }
 
+bool CustomWakeWord::ResetMultinet(std::deque<Command_by_id> custom_commands) {
+
+    custom_command_wake_.clear();
+    custom_command_wake_ = custom_commands;
+    return true;
+    // if (models_ == nullptr || models_->num == -1) {
+    //     ESP_LOGE(TAG, "Failed to ResetMultinet wakenet model, because models_list is nullptr");
+    //     return false;
+    // } else 
+
+    // commands_byid_.clear();
+    // commands_byid_ = custom_commands;
+
+    // // 初始化 multinet (命令词识别)
+    // mn_name_ = esp_srmodel_filter(models_, ESP_MN_PREFIX, language_.c_str());
+    // if (mn_name_ == nullptr) {
+    //     ESP_LOGW(TAG, "Language '%s' multinet not found, falling back to any multinet model", language_.c_str());
+    //     mn_name_ = esp_srmodel_filter(models_, ESP_MN_PREFIX, NULL);
+    // }
+    // if (mn_name_ == nullptr) {
+    //     ESP_LOGE(TAG, "Failed to initialize multinet, mn_name is nullptr");
+    //     ESP_LOGI(TAG, "Please refer to https://pcn7cs20v8cr.feishu.cn/wiki/CpQjwQsCJiQSWSkYEvrcxcbVnwh to add custom wake word");
+    //     return false;
+    // }
+
+    // multinet_ = esp_mn_handle_from_name(mn_name_);
+    // multinet_model_data_ = multinet_->create(mn_name_, duration_);
+    // multinet_->set_det_threshold(multinet_model_data_, threshold_);
+    // esp_mn_commands_clear();
+    // for (int i = 0; i < commands_.size(); i++) {
+    //     ESP_LOGI(TAG, "Command: %s, Id: %d", commands_byid_[i].id, commands_byid_[i].command.c_str());
+    //     esp_mn_commands_add(commands_byid_[i].id, commands_byid_[i].command.c_str());
+    // }
+    // esp_mn_commands_update();
+    
+    // multinet_->print_active_speech_commands(multinet_model_data_);
+    // return true;
+}
+
 
 bool CustomWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models_list) {
     codec_ = codec;
-    commands_.clear();
+    // commands_byid_.clear();
 
     if (models_list == nullptr) {
         language_ = "cn";
         models_ = esp_srmodel_init("model");
 #ifdef CONFIG_CUSTOM_WAKE_WORD
         threshold_ = CONFIG_CUSTOM_WAKE_WORD_THRESHOLD / 100.0f;
+        ESP_LOGE(TAG, "models_list == nullptr");
         commands_.push_back({CONFIG_CUSTOM_WAKE_WORD, CONFIG_CUSTOM_WAKE_WORD_DISPLAY, "wake"});
+        
 #endif
     } else {
+        ESP_LOGE(TAG, "models_list !== nullptr");
         models_ = models_list;
         ParseWakenetModelConfig();
     }
@@ -121,8 +163,9 @@ bool CustomWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models_list) 
     multinet_model_data_ = multinet_->create(mn_name_, duration_);
     multinet_->set_det_threshold(multinet_model_data_, threshold_);
     esp_mn_commands_clear();
-    for (int i = 0; i < commands_.size(); i++) {
-        esp_mn_commands_add(i + 1, commands_[i].command.c_str());
+    for (int i = 0; i < commands_byid_.size(); i++) {
+        ESP_LOGE(TAG, "Add Command: %s, Id: %d, i = %d", commands_byid_[i].id, commands_byid_[i].command.c_str(), i);
+        esp_mn_commands_add(commands_byid_[i].id , commands_byid_[i].command.c_str());
     }
     esp_mn_commands_update();
     
@@ -132,6 +175,10 @@ bool CustomWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models_list) 
 
 void CustomWakeWord::OnWakeWordDetected(std::function<void(const std::string& wake_word)> callback) {
     wake_word_detected_callback_ = callback;
+}
+
+void CustomWakeWord::OnCmdWordDetected(std::function<void(const std::string& cmd_word, int id)> callback) {
+    cmd_word_detected_callback_ = callback;
 }
 
 void CustomWakeWord::Start() {
@@ -169,8 +216,15 @@ void CustomWakeWord::Feed(const std::vector<int16_t>& data) {
         for (int i = 0; i < mn_result->num && running_; i++) {
             ESP_LOGI(TAG, "Custom wake word detected: command_id=%d, string=%s, prob=%f", 
                     mn_result->command_id[i], mn_result->string, mn_result->prob[i]);
-            auto& command = commands_[mn_result->command_id[i] - 1];
-            if (command.action == "wake") {
+            auto& command = commands_byid_[mn_result->command_id[i] - 1];
+            if (command.action == "cmd") {
+                ESP_LOGI(TAG, "Command word detected: %s", command.text.c_str());
+                if(cmd_word_detected_callback_) {
+                    cmd_word_detected_callback_(command.command, command.id);
+                }
+                break;
+            }
+            else if (command.action == "wake") {
                 last_detected_wake_word_ = command.text;
                 running_ = false;
                 

@@ -23,6 +23,13 @@
 #include "wake_word.h"
 #include "protocol.h"
 
+#if CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
+#include "wake_words/afe_wake_word.h"
+#include "wake_words/custom_wake_word.h"
+#else
+#include "wake_words/esp_wake_word.h"
+#endif
+
 
 /*
  * There are two types of audio data flow:
@@ -55,6 +62,7 @@
 struct AudioServiceCallbacks {
     std::function<void(void)> on_send_queue_available;
     std::function<void(const std::string&)> on_wake_word_detected;
+    std::function<void(const std::string&, int id)> on_cmd_word_detected;
     std::function<void(bool)> on_vad_change;
     std::function<void(void)> on_audio_testing_queue_full;
 };
@@ -109,6 +117,8 @@ public:
     bool ReadAudioData(std::vector<int16_t>& data, int sample_rate, int samples);
     void ResetDecoder();
     void SetModelsList(srmodel_list_t* models_list);
+
+    bool ResetMultinet(std::deque<Command_by_id> custom_commands);
 
 private:
     AudioCodec* codec_ = nullptr;
