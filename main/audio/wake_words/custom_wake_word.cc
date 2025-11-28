@@ -85,8 +85,8 @@ void CustomWakeWord::ParseWakenetModelConfig() {
 
 bool CustomWakeWord::ResetMultinet(std::deque<Command_by_id> custom_commands) {
 
-    custom_command_wake_.clear();
-    custom_command_wake_ = custom_commands;
+    commands_byid_.clear();
+    commands_byid_ = custom_commands;
     return true;
     // if (models_ == nullptr || models_->num == -1) {
     //     ESP_LOGE(TAG, "Failed to ResetMultinet wakenet model, because models_list is nullptr");
@@ -164,7 +164,10 @@ bool CustomWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models_list) 
     multinet_->set_det_threshold(multinet_model_data_, threshold_);
     esp_mn_commands_clear();
     for (int i = 0; i < commands_byid_.size(); i++) {
-        ESP_LOGE(TAG, "Add Command: %s, Id: %d, i = %d", commands_byid_[i].id, commands_byid_[i].command.c_str(), i);
+        ESP_LOGE(TAG, "Add Command: %s, Id: %d, i = %d", 
+        commands_byid_[i].command.c_str(), 
+         commands_byid_[i].id, 
+         i);
         esp_mn_commands_add(commands_byid_[i].id , commands_byid_[i].command.c_str());
     }
     esp_mn_commands_update();
