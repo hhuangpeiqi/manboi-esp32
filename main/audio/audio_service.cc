@@ -651,13 +651,16 @@ void AudioService::SetModelsList(srmodel_list_t* models_list) {
 #if CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
     if (esp_srmodel_filter(models_list_, ESP_MN_PREFIX, NULL) != nullptr) {
         wake_word_ = std::make_unique<CustomWakeWord>();
-
-        std::deque<Command_by_id> custom_commands;
-        custom_commands.push_back({1, "xiao tu dou", "td", "wake"});
-        custom_commands.push_back({2, "wu sa qi", "537", "cmd"});
-        custom_commands.push_back({2, "wu sha qi", "537", "cmd"});
-        custom_commands.push_back({3, "man bo", "mb", "cmd"});
-        ResetMultinet(custom_commands);
+        if(custom_commands_.size() > 0){
+            auto* custom = dynamic_cast<CustomWakeWord*>(wake_word_.get());
+            if (custom) {
+                ESP_LOGE("AudioService", "ResetMultinet");
+                custom->ResetMultinet(custom_commands_);
+            }
+        }
+        else{
+            ESP_LOGE(TAG, "No multinet model found");
+        }
     } else if (esp_srmodel_filter(models_list_, ESP_WN_PREFIX, NULL) != nullptr) {
         wake_word_ = std::make_unique<AfeWakeWord>();
     } else {
@@ -697,13 +700,19 @@ bool AudioService::IsAfeWakeWord() {
 #endif
 }
 
-bool AudioService::ResetMultinet(std::deque<Command_by_id> custom_commands)  {
-#ifdef CONFIG_IDF_TARGET_ESP32S3
-    auto* custom = dynamic_cast<CustomWakeWord*>(wake_word_.get());
-    if (custom) {
-        ESP_LOGE("AudioService", "ResetMultinet");
-        return custom->ResetMultinet(custom_commands);
-    }
-#endif
-    return false;
+void AudioService::SetWakeCmdWords(std::deque<Command_by_id> commands)
+{
+    custom_commands_ = commands;
 }
+
+// bool AudioService::ResetMultinet(std::deque<Command_by_id> custom_commands)
+// {
+// #ifdef CONFIG_IDF_TARGET_ESP32S3
+//     auto* custom = dynamic_cast<CustomWakeWord*>(wake_word_.get());
+//     if (custom) {
+//         ESP_LOGE("AudioService", "ResetMultinet");
+//         return custom->ResetMultinet(custom_commands);
+//     }
+// #endif
+//     return false;
+// }

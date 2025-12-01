@@ -361,9 +361,15 @@ void Application::Start() {
     /* Setup the audio service */
     auto codec = board.GetAudioCodec();
     audio_service_.Initialize(codec);
-
     audio_service_.Start();
-
+    std::deque<Command_by_id> custom_commands;
+    custom_commands.push_back({0, "xiao tu dou", "td", "wake"});
+    custom_commands.push_back({1, "wu sa qi", "537", "cmd"});
+    custom_commands.push_back({1, "wu sha qi", "537", "cmd"});
+    custom_commands.push_back({2, "man bo", "mb", "cmd"});
+    custom_commands.push_back({2, "mang bo", "mb", "cmd"});
+    custom_commands.push_back({2, "meng bo", "mb", "cmd"});
+    audio_service_.SetWakeCmdWords(std::move(custom_commands));
     
 
     AudioServiceCallbacks callbacks;
@@ -378,6 +384,10 @@ void Application::Start() {
     };
     callbacks.on_cmd_word_detected = [this](const std::string& cmd_word, int8_t id) {
         ESP_LOGE(TAG, "Command detected: %s id: %d", cmd_word.c_str(), id);
+        if(id == 2)
+        {
+            audio_service_.PlaySound(Lang::Sounds::OGG_IFYOU);
+        }
     };
     audio_service_.SetCallbacks(callbacks);
 

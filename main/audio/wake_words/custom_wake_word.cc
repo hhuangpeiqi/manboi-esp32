@@ -217,18 +217,33 @@ void CustomWakeWord::Feed(const std::vector<int16_t>& data) {
     } else if (mn_state == ESP_MN_STATE_DETECTED) {
         esp_mn_results_t *mn_result = multinet_->get_results(multinet_model_data_);
         for (int i = 0; i < mn_result->num && running_; i++) {
-            ESP_LOGI(TAG, "Custom wake word detected: command_id=%d, string=%s, prob=%f", 
-                    mn_result->command_id[i], mn_result->string, mn_result->prob[i]);
-            auto& command = commands_byid_[mn_result->command_id[i] - 1];
-            if (command.action == "cmd") {
-                ESP_LOGI(TAG, "Command word detected: %s", command.text.c_str());
+            ESP_LOGI(TAG, "Custom wake word detected: command_id=%d, string=%s, prob=%f, proc_id = %d", 
+                    mn_result->command_id[i], mn_result->string, mn_result->prob[i], mn_result->phrase_id[i]);
+            // auto& command = commands_byid_[mn_result->command_id[i] - 1];
+            // if (command.action == "cmd") {
+            //     ESP_LOGI(TAG, "Command word detected: %s", command.text.c_str());
+            //     if(cmd_word_detected_callback_) {
+            //         cmd_word_detected_callback_(command.command, command.id);
+            //     }
+            //     break;
+            // }
+            // else if (command.action == "wake") {
+            //     last_detected_wake_word_ = command.text;
+            //     running_ = false;
+                
+            //     if (wake_word_detected_callback_) {
+            //         wake_word_detected_callback_(last_detected_wake_word_);
+            //     }
+            // }
+            if (mn_result->phrase_id[i] != 0) {
+                ESP_LOGI(TAG, "Command word detected: %s", mn_result->string);
                 if(cmd_word_detected_callback_) {
-                    cmd_word_detected_callback_(command.command, command.id);
+                    cmd_word_detected_callback_(mn_result->string, mn_result->phrase_id[i]);
                 }
                 break;
             }
-            else if (command.action == "wake") {
-                last_detected_wake_word_ = command.text;
+            else if (mn_result->phrase_id[i] == 0) {
+                last_detected_wake_word_ = mn_result->string;
                 running_ = false;
                 
                 if (wake_word_detected_callback_) {

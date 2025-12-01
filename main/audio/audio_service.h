@@ -118,7 +118,8 @@ public:
     void ResetDecoder();
     void SetModelsList(srmodel_list_t* models_list);
 
-    bool ResetMultinet(std::deque<Command_by_id> custom_commands);
+    void SetWakeCmdWords(std::deque<Command_by_id> commands);
+    // bool ResetMultinet(std::deque<Command_by_id> custom_commands);
 
 private:
     AudioCodec* codec_ = nullptr;
@@ -166,6 +167,8 @@ private:
     void PushTaskToEncodeQueue(AudioTaskType type, std::vector<int16_t>&& pcm);
     void SetDecodeSampleRate(int sample_rate, int frame_duration);
     void CheckAndUpdateAudioPowerState();
+
+    std::deque<Command_by_id> custom_commands_;
 };
 
 #endif
