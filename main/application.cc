@@ -420,10 +420,13 @@ void Application::Start() {
                 audio_service_.PlaySound(Lang::Sounds::OGG_YAHAHA);
             else if(r == 6)
                 audio_service_.PlaySound(Lang::Sounds::OGG_YAHA);
+            ESP_LOGI(TAG, "537 Playing sound done?");
         }
         else if(id == 4)
         {
+            ESP_LOGI(TAG, "537 Playing sound start");
             audio_service_.PlaySound(Lang::Sounds::OGG_CANGE);
+            ESP_LOGI(TAG, "537 Playing sound done?");
         }
     };
     audio_service_.SetCallbacks(callbacks);
