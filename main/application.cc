@@ -394,8 +394,11 @@ void Application::Start() {
     callbacks.on_vad_change = [this](bool speaking) {
         xEventGroupSetBits(event_group_, MAIN_EVENT_VAD_CHANGE);
     };
-    callbacks.on_cmd_word_detected = [this](const std::string& cmd_word, int8_t id) {
+    callbacks.on_cmd_word_detected = [this, display](const std::string& cmd_word, int8_t id) {
         ESP_LOGE(TAG, "Command detected: %s id: %d", cmd_word.c_str(), id);
+        Schedule([this, display, message = cmd_word]() {
+            display->SetChatMessage("assistant", message.c_str());
+        });
         if(id == 2)
         {
             ESP_LOGE(TAG, "Playing sound");
