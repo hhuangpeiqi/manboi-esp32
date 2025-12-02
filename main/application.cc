@@ -16,8 +16,14 @@
 #include <driver/gpio.h>
 #include <arpa/inet.h>
 #include <font_awesome.h>
-
+#include "esp_system.h"
 #define TAG "Application"
+
+static inline int random_range(int min, int max)
+{
+    uint32_t r = esp_random();
+    return min + (r % (max - min + 1));
+}
 
 
 static const char* const STATE_STRINGS[] = {
@@ -369,6 +375,12 @@ void Application::Start() {
     custom_commands.push_back({2, "man bo", "mb", "cmd"});
     custom_commands.push_back({2, "mang bo", "mb", "cmd"});
     custom_commands.push_back({2, "meng bo", "mb", "cmd"});
+    custom_commands.push_back({3, "wu la", "wl", "cmd"});
+    custom_commands.push_back({3, "wu na", "wl", "cmd"});
+    custom_commands.push_back({4, "can ge", "cange", "cmd"});
+    custom_commands.push_back({4, "cang ge", "cange", "cmd"});
+    custom_commands.push_back({4, "chan ge", "cange", "cmd"});
+    custom_commands.push_back({4, "chang ge", "cange", "cmd"});
     audio_service_.SetWakeCmdWords(std::move(custom_commands));
     
 
@@ -386,7 +398,32 @@ void Application::Start() {
         ESP_LOGE(TAG, "Command detected: %s id: %d", cmd_word.c_str(), id);
         if(id == 2)
         {
-            audio_service_.PlaySound(Lang::Sounds::OGG_IFYOU);
+            ESP_LOGE(TAG, "Playing sound");
+            // audio_service_.PlaySound(Lang::Sounds::OGG_IFYOU);
+            ESP_LOGE(TAG, "Playing sound Done");
+        }
+        else if(id == 3)
+        {
+            int r = random_range(0, 6);
+            ESP_LOGI(TAG, "537 Playing sound %d", r);
+            if(r == 0)
+                audio_service_.PlaySound(Lang::Sounds::OGG_HA);
+            else if(r == 1)
+                audio_service_.PlaySound(Lang::Sounds::OGG_PU);
+            else if(r == 2 )
+                audio_service_.PlaySound(Lang::Sounds::OGG_WULA);
+            else if(r == 3)
+                audio_service_.PlaySound(Lang::Sounds::OGG_WULAYAHAYAHAWULA);
+            else if(r == 4)
+                audio_service_.PlaySound(Lang::Sounds::OGG_WUYAYIHA);
+            else if(r == 5)
+                audio_service_.PlaySound(Lang::Sounds::OGG_YAHAHA);
+            else if(r == 6)
+                audio_service_.PlaySound(Lang::Sounds::OGG_YAHA);
+        }
+        else if(id == 4)
+        {
+            audio_service_.PlaySound(Lang::Sounds::OGG_CANGE);
         }
     };
     audio_service_.SetCallbacks(callbacks);
@@ -685,6 +722,7 @@ void Application::SetListeningMode(ListeningMode mode) {
 
 void Application::SetDeviceState(DeviceState state) {
     if (device_state_ == state) {
+        ESP_LOGE(TAG, "Invalid state transition: %d", state);
         return;
     }
     
