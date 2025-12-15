@@ -95,7 +95,7 @@ private:
         ESP_LOGI(TAG, "初始化EDA机器狗MCP控制器");
         ::InitializeEDARobotDogController();
     }
-void InitializeButtons() {
+    void InitializeButtons() {
 
         touch_button_.OnPressDown([this]() {
             Application::GetInstance().StartListening();
